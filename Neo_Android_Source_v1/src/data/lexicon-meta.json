@@ -1,0 +1,32 @@
+{
+  "version": "2.4",
+  "legacy_count": 10164,
+  "new_count": 591,
+  "total_count": 10755,
+  "domains": [
+    "Acadêmico/Filosofia",
+    "Acadêmico/Geral",
+    "Acadêmico/Psicologia",
+    "Ciência/Química",
+    "Festas/Calendário",
+    "Gíria/Palavrão",
+    "Internet/Tecnologia",
+    "Religião/Espiritualidade",
+    "Saudações/Conversa",
+    "Sexo/Relacionamentos",
+    "Sociedade/Economia",
+    "Universidade/Estudo",
+    "ações",
+    "casa",
+    "comida",
+    "corpo",
+    "cotidiano",
+    "cultura",
+    "estudo",
+    "natureza",
+    "pessoas",
+    "sociedade",
+    "tecnologia",
+    "transporte"
+  ]
+}

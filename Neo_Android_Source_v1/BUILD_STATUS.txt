@@ -1,0 +1,10 @@
+STATUS DA COMPILACAO NESTE AMBIENTE
+
+- Testes JavaScript: 14/14 aprovados.
+- APK: NAO compilado neste sandbox.
+- Motivo imediato: android/gradle/wrapper/gradle-wrapper.jar ausente.
+- Ambiente tambem nao possui Android SDK nem node_modules instalados.
+- Modelo Vosk binario nao foi baixado porque downloads binarios externos foram bloqueados.
+
+Use BUILD_ANDROID.md ou o workflow .github/workflows/build-android.yml.
+O app final foi projetado para funcionar offline; o modelo Vosk e baixado apenas no momento do build e depois fica embarcado.

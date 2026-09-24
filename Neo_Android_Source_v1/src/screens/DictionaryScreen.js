@@ -1,0 +1,18 @@
+import React,{useMemo,useState} from 'react';
+import {SafeAreaView,View,Text,TextInput,Pressable,FlatList,StyleSheet} from 'react-native';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import ScreenHeader from '../components/ScreenHeader';
+import {COLORS,RADIUS} from '../theme';
+import {searchLexicon,DOMAINS} from '../engine/neoEngine';
+
+const featured=['Todos','Saudações/Conversa','Internet/Tecnologia','Acadêmico/Geral','Acadêmico/Psicologia','Acadêmico/Filosofia','Sexo/Relacionamentos'];
+export default function DictionaryScreen(){
+  const [query,setQuery]=useState(''); const [domain,setDomain]=useState('Todos');
+  const rows=useMemo(()=>searchLexicon(query,{domain:domain==='Todos'?null:domain}).slice(0,120),[query,domain]);
+  return <SafeAreaView style={styles.safe}><View style={styles.page}><ScreenHeader title="Dicionário" subtitle="10 mil+ entradas offline"/>
+    <View style={styles.search}><MaterialCommunityIcons name="magnify" size={22} color={COLORS.muted}/><TextInput value={query} onChangeText={setQuery} placeholder="Busque em Português ou Neo" placeholderTextColor={COLORS.muted} style={styles.searchInput}/>{query?<Pressable onPress={()=>setQuery('')}><MaterialCommunityIcons name="close-circle" size={21} color={COLORS.orangeStrong}/></Pressable>:null}</View>
+    <FlatList horizontal showsHorizontalScrollIndicator={false} data={featured.filter(x=>x==='Todos'||DOMAINS.includes(x))} keyExtractor={x=>x} contentContainerStyle={styles.filters} renderItem={({item})=><Pressable onPress={()=>setDomain(item)} style={[styles.filter,domain===item&&styles.filterActive]}><Text style={[styles.filterText,domain===item&&styles.filterTextActive]}>{item.replace('Acadêmico/','')}</Text></Pressable>}/>
+    <FlatList data={rows} keyExtractor={(x,i)=>x.neo+'-'+i} contentContainerStyle={styles.list} keyboardShouldPersistTaps="handled" renderItem={({item})=><View style={styles.row}><View style={styles.rowTop}><Text style={styles.neo}>{item.neo}</Text><View style={styles.badge}><Text style={styles.badgeText}>{item.classe}</Text></View></View><Text style={styles.pt}>{item.pt}</Text><Text style={styles.meta}>{item.dominio} · {item.registro||'neutro'} · raiz {item.raiz}</Text></View>} ListEmptyComponent={<View style={styles.empty}><MaterialCommunityIcons name="book-search-outline" size={44} color={COLORS.orange}/><Text style={styles.emptyText}>Nada encontrado.</Text></View>}/>
+  </View></SafeAreaView>;
+}
+const styles=StyleSheet.create({safe:{flex:1,backgroundColor:COLORS.cream},page:{flex:1,padding:18},search:{height:54,borderRadius:20,backgroundColor:COLORS.paper,borderWidth:1,borderColor:COLORS.line,paddingHorizontal:15,flexDirection:'row',alignItems:'center',gap:10},searchInput:{flex:1,fontSize:16,color:COLORS.ink},filters:{gap:8,paddingVertical:12},filter:{paddingHorizontal:13,paddingVertical:8,borderRadius:999,backgroundColor:COLORS.paper,borderWidth:1,borderColor:COLORS.line},filterActive:{backgroundColor:COLORS.orange,borderColor:COLORS.orange},filterText:{fontSize:12,fontWeight:'700',color:COLORS.muted},filterTextActive:{color:'#fff'},list:{paddingBottom:110},row:{backgroundColor:COLORS.paper,borderBottomWidth:1,borderBottomColor:COLORS.line,paddingVertical:14,paddingHorizontal:4},rowTop:{flexDirection:'row',alignItems:'center',gap:8},neo:{fontSize:20,fontWeight:'850',color:COLORS.ink},pt:{fontSize:16,color:COLORS.ink,marginTop:3},meta:{fontSize:12,color:COLORS.muted,marginTop:5},badge:{backgroundColor:COLORS.orangeSoft,paddingHorizontal:8,paddingVertical:4,borderRadius:RADIUS.sm},badgeText:{fontSize:10,color:COLORS.orangeStrong,fontWeight:'800'},empty:{alignItems:'center',paddingTop:70,gap:10},emptyText:{color:COLORS.muted}});
