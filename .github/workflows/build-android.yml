@@ -44,6 +44,9 @@ jobs:
         working-directory: android
         run: gradle wrapper --gradle-version 8.14.3
 
+      - name: Generate APK signing key
+        run: keytool -genkeypair -v -keystore android/app/debug.keystore -storepass android -alias androiddebugkey -keypass android -dname "CN=Neo Android,O=Neo,C=BR" -keyalg RSA -keysize 2048 -validity 10000
+
       - name: Build release APK
         working-directory: android
         run: ./gradlew assembleRelease --no-daemon
