@@ -40,7 +40,7 @@ rm -rf "$DEST"
 mkdir -p "$DEST"
 cp -R "$TMP_DIR/unpacked/$MODEL_NAME/." "$DEST/"
 
-if [[ ! -f "$DEST/am/final.mdl" ]]; then
+if [[ ! -f "$DEST/am/final.mdl" && ! -f "$DEST/final.mdl" ]]; then
   echo "Modelo extraído sem am/final.mdl; abortando." >&2
   exit 1
 fi
