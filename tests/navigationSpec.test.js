@@ -45,3 +45,19 @@ test('voice screen requests Android microphone permission at runtime', () => {
   assert.match(voice, /PermissionsAndroid\.request/);
   assert.match(manifest, /android\.permission\.RECORD_AUDIO/);
 });
+
+test('screens use safe-area-context and fast 80ms motion', () => {
+  const translator = read('src/screens/TranslatorScreen.js');
+  const dictionary = read('src/screens/DictionaryScreen.js');
+  const voice = read('src/screens/VoiceScreen.js');
+  const card = read('src/components/SurfaceCard.js');
+  for (const src of [translator,dictionary,voice]) assert.match(src, /react-native-safe-area-context/);
+  assert.match(card, /duration:\s*80/);
+});
+
+test('android launcher includes an adaptive Neo icon', () => {
+  const fg = read('android/app/src/main/res/drawable/ic_launcher_foreground.xml');
+  const adaptive = read('android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml');
+  assert.match(fg, /#FFFFFFFF/i);
+  assert.match(adaptive, /ic_launcher_foreground/);
+});

@@ -37,3 +37,12 @@ test('starts and stops offline recognition and forwards normalized final results
   assert.equal(calls.some(x=>x[0]==='start'),true);
   assert.equal(calls.some(x=>x[0]==='stop'),true);
 });
+
+test('accepts both constructor-style and singleton module exports', () => {
+  const svc=fresh();
+  assert.equal(typeof svc.__coerceVoskModuleForTests, 'function');
+  const singleton={loadModel(){},start(){}};
+  assert.equal(svc.__coerceVoskModuleForTests(singleton), singleton);
+  class FakeVosk { loadModel(){} start(){} }
+  assert.ok(svc.__coerceVoskModuleForTests(FakeVosk) instanceof FakeVosk);
+});

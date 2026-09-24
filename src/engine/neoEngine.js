@@ -1,12 +1,13 @@
-const core = require('./core');
-const LEXICON = require('../data/lexicon.json');
+const modern = require('./modernGrammar');
+const LEXICON = modern.LEXICON;
 
 function norm(s){
   return String(s ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
 }
-function translatePtToNeo(text){ return core.P2N(String(text ?? '')); }
-function translateNeoToPt(text){ return core.N2P(String(text ?? '')); }
+function translatePtToNeo(text){ return modern.translatePtToNeo(String(text ?? '')); }
+function translateNeoToPt(text){ return modern.translateNeoToPt(String(text ?? '')); }
 function searchLexicon(query, filters={}){
+  modern.ensureSearchEntry(query);
   const q=norm(query);
   const domain=filters.domain || null;
   const register=filters.register || null;
@@ -22,4 +23,10 @@ function searchLexicon(query, filters={}){
     return ae-be || String(a.pt).localeCompare(String(b.pt),'pt-BR');
   });
 }
-module.exports={translatePtToNeo,translateNeoToPt,searchLexicon,LEXICON,DOMAINS:[...new Set(LEXICON.map(x=>x.dominio))].sort()};
+module.exports={
+  translatePtToNeo,
+  translateNeoToPt,
+  searchLexicon,
+  LEXICON,
+  DOMAINS:[...new Set(LEXICON.map(x=>x.dominio))].sort(),
+};
