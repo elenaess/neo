@@ -1,25 +1,69 @@
-import React,{useMemo,useState} from 'react';
+import React,{useCallback,useEffect,useMemo,useRef,useState} from 'react';
 import {View,Text,TextInput,Pressable,FlatList,ScrollView,StyleSheet} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import ScreenHeader from '../components/ScreenHeader';
 import SurfaceCard from '../components/SurfaceCard';
 import {COLORS,RADIUS} from '../theme';
-import {searchLexicon,DOMAINS} from '../engine/neoEngine';
+import {searchLexiconPage,DOMAINS} from '../engine/neoEngine';
 
-const featured=['Todos','Saudações/Conversa','Internet/Tecnologia','Acadêmico/Geral','Acadêmico/Psicologia','Acadêmico/Filosofia','Sexo/Relacionamentos','Gramática/Numerais'];
+const PAGE_SIZE=40;
+const featured=['Todos','Saudações/Conversa','Internet/Tecnologia','Acadêmico/Geral','Acadêmico/Psicologia','Acadêmico/Filosofia','Sexo/Relacionamentos','Gramática/Numerais','Lugares/Geografia','Sociedade/Cultura'];
+
+function domainOption(domain){
+  return domain==='Todos'?null:domain;
+}
 
 export default function DictionaryScreen(){
   const [query,setQuery]=useState('');
   const [domain,setDomain]=useState('Todos');
-  const rows=useMemo(()=>searchLexicon(query,{domain:domain==='Todos'?null:domain}).slice(0,140),[query,domain]);
-  const filters=featured.filter(x=>x==='Todos'||DOMAINS.includes(x));
+  const [rows,setRows]=useState([]);
+  const [total,setTotal]=useState(0);
+  const [hasMore,setHasMore]=useState(false);
+  const offsetRef=useRef(0);
+  const loadingMoreRef=useRef(false);
+
+  const filters=useMemo(()=>featured.filter(x=>x==='Todos'||DOMAINS.includes(x)),[]);
+
+  useEffect(()=>{
+    const page=searchLexiconPage(query,{
+      domain:domainOption(domain),
+      offset:0,
+      limit:PAGE_SIZE,
+    });
+    setRows(page.items);
+    setTotal(page.total);
+    setHasMore(page.hasMore);
+    offsetRef.current=page.items.length;
+    loadingMoreRef.current=false;
+  },[query,domain]);
+
+  const loadMore=useCallback(()=>{
+    if(!hasMore||loadingMoreRef.current) return;
+    loadingMoreRef.current=true;
+    const page=searchLexiconPage(query,{
+      domain:domainOption(domain),
+      offset:offsetRef.current,
+      limit:PAGE_SIZE,
+    });
+    offsetRef.current+=page.items.length;
+    setRows(current=>[...current,...page.items]);
+    setHasMore(page.hasMore);
+    loadingMoreRef.current=false;
+  },[query,domain,hasMore]);
 
   const header=<View>
-    <ScreenHeader title="Dicionário" subtitle="10 mil+ entradas offline"/>
+    <ScreenHeader title="Dicionário" subtitle="11 mil+ entradas offline"/>
     <View style={styles.search}>
       <MaterialCommunityIcons name="magnify" size={22} color={COLORS.muted}/>
-      <TextInput value={query} onChangeText={setQuery} placeholder="Busque em Português ou Neo" placeholderTextColor={COLORS.muted} style={styles.searchInput}/>
+      <TextInput
+        value={query}
+        onChangeText={setQuery}
+        placeholder="Busque em Português ou Neo"
+        placeholderTextColor={COLORS.muted}
+        style={styles.searchInput}
+        autoCorrect={false}
+      />
       {query?<Pressable onPress={()=>setQuery('')}><MaterialCommunityIcons name="close-circle" size={21} color={COLORS.orangeStrong}/></Pressable>:null}
     </View>
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filters}>
@@ -28,27 +72,34 @@ export default function DictionaryScreen(){
       </Pressable>)}
     </ScrollView>
     <View style={styles.infoRow}>
-      <Text style={styles.infoStrong}>{rows.length} resultados</Text>
-      <Text style={styles.infoMuted}>{domain==='Todos'?'todos os domínios':domain.replace('Acadêmico/','').replace('Gramática/','')}</Text>
+      <Text style={styles.infoStrong}>{total} resultados</Text>
+      <Text style={styles.infoMuted}>{rows.length}{hasMore?' carregados':' exibidos'}</Text>
     </View>
   </View>;
 
   return <SafeAreaView edges={['top']} style={styles.safe}>
     <FlatList
       data={rows}
-      keyExtractor={(x,i)=>`${x.neo}-${i}`}
+      keyExtractor={(x,i)=>`${x.neo}-${x.pt}-${i}`}
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
       contentContainerStyle={styles.page}
       ListHeaderComponent={header}
-      renderItem={({item,index})=><SurfaceCard style={styles.row} delay={Math.min(index,6)*10}>
+      onEndReached={loadMore}
+      onEndReachedThreshold={0.45}
+      initialNumToRender={14}
+      maxToRenderPerBatch={14}
+      updateCellsBatchingPeriod={32}
+      windowSize={7}
+      removeClippedSubviews
+      renderItem={({item})=><View style={styles.row}>
         <View style={styles.rowTop}>
           <Text style={styles.neo}>{item.neo}</Text>
           <View style={styles.badge}><Text style={styles.badgeText}>{item.classe}</Text></View>
         </View>
         <Text style={styles.pt}>{item.pt}</Text>
         <Text style={styles.meta}>{item.dominio} · {item.registro||'neutro'} · raiz {item.raiz}</Text>
-      </SurfaceCard>}
+      </View>}
       ListEmptyComponent={<SurfaceCard style={styles.empty}>
         <MaterialCommunityIcons name="book-search-outline" size={44} color={COLORS.orange}/>
         <Text style={styles.emptyTitle}>Nada encontrado</Text>
@@ -72,7 +123,7 @@ const styles=StyleSheet.create({
   infoRow:{flexDirection:'row',justifyContent:'space-between',marginBottom:9},
   infoStrong:{fontSize:12,fontWeight:'800',color:COLORS.ink},
   infoMuted:{fontSize:12,color:COLORS.muted},
-  row:{marginBottom:10,paddingVertical:16},
+  row:{marginBottom:9,paddingVertical:15,paddingHorizontal:16,backgroundColor:COLORS.paper,borderWidth:1,borderColor:COLORS.line,borderRadius:RADIUS.md},
   rowTop:{flexDirection:'row',alignItems:'center',gap:8,flexWrap:'wrap'},
   neo:{fontSize:20,fontWeight:'800',color:COLORS.ink},
   pt:{fontSize:16,color:COLORS.ink,marginTop:4},

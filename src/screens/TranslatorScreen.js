@@ -5,12 +5,13 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import SurfaceCard from '../components/SurfaceCard';
 import ScreenHeader from '../components/ScreenHeader';
 import {COLORS,RADIUS} from '../theme';
-import {translatePtToNeo,translateNeoToPt} from '../engine/neoEngine';
+import {translatePtToNeo,translateNeoToPt,formatAnalysis} from '../engine/neoEngine';
 
 export default function TranslatorScreen(){
   const [direction,setDirection]=useState('pt-neo');
   const [input,setInput]=useState('');
   const result=useMemo(()=>direction==='pt-neo'?translatePtToNeo(input):translateNeoToPt(input),[direction,input]);
+  const formatted=useMemo(()=>formatAnalysis(result.analysis,{limit:12}),[result.analysis]);
   const swap=()=>{setInput(result.text||'');setDirection(x=>x==='pt-neo'?'neo-pt':'pt-neo')};
 
   return <SafeAreaView edges={['top']} style={styles.safe}>
@@ -50,14 +51,15 @@ export default function TranslatorScreen(){
         </View>
       </SurfaceCard>
 
-      {result.analysis?.length?<View style={styles.analysis}>
+      {formatted.items.length?<View style={styles.analysis}>
         <Text style={styles.sectionTitle}>Análise</Text>
         <View style={styles.chips}>
-          {result.analysis.filter(x=>x.type!=='punct').slice(0,12).map((x,i)=><View key={i} style={styles.chip}>
-            <Text style={styles.chipNeo}>{x.neo||x.neoBase||x.raw}</Text>
-            <Text style={styles.chipPt}>{x.pt||x.lemma||x.entry?.pt||x.raw} · {x.pos||x.type}</Text>
+          {formatted.items.map((item,i)=><View key={`${item.surface}-${i}`} style={styles.chip}>
+            <Text style={styles.chipNeo}>{item.title}</Text>
+            {item.detail?<Text style={styles.chipPt}>{item.detail}</Text>:null}
           </View>)}
         </View>
+        {formatted.hiddenCount>0?<Text style={styles.moreAnalysis}>+ {formatted.hiddenCount} itens de análise</Text>:null}
       </View>:null}
     </ScrollView>
   </SafeAreaView>;
@@ -83,5 +85,6 @@ const styles=StyleSheet.create({
   chips:{flexDirection:'row',flexWrap:'wrap',gap:8},
   chip:{backgroundColor:COLORS.orangeSoft,borderRadius:16,paddingHorizontal:12,paddingVertical:10},
   chipNeo:{fontWeight:'800',color:COLORS.ink},
-  chipPt:{fontSize:12,color:COLORS.muted,marginTop:2},
+  chipPt:{fontSize:12,color:COLORS.muted,marginTop:3,lineHeight:17},
+  moreAnalysis:{fontSize:12,color:COLORS.muted,marginTop:9,fontWeight:'700'},
 });

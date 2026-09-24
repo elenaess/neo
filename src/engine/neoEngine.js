@@ -1,32 +1,39 @@
 const modern = require('./modernGrammar');
 const LEXICON = modern.LEXICON;
+const {
+  createLexiconIndex,
+  searchLexiconPage: searchPage,
+} = require('./lexiconSearch');
+const {formatAnalysis} = require('./analysisFormatter');
 
-function norm(s){
-  return String(s ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+let SEARCH_INDEX = createLexiconIndex(LEXICON);
+let SEARCH_INDEX_SIZE = LEXICON.length;
+
+function refreshSearchIndexIfNeeded(){
+  if(SEARCH_INDEX_SIZE === LEXICON.length) return;
+  SEARCH_INDEX = createLexiconIndex(LEXICON);
+  SEARCH_INDEX_SIZE = LEXICON.length;
 }
+
 function translatePtToNeo(text){ return modern.translatePtToNeo(String(text ?? '')); }
 function translateNeoToPt(text){ return modern.translateNeoToPt(String(text ?? '')); }
-function searchLexicon(query, filters={}){
+
+function searchLexiconPage(query, options={}){
   modern.ensureSearchEntry(query);
-  const q=norm(query);
-  const domain=filters.domain || null;
-  const register=filters.register || null;
-  return LEXICON.filter(e => {
-    if(domain && e.dominio !== domain) return false;
-    if(register && e.registro !== register) return false;
-    if(!q) return true;
-    const hay=[e.pt,e.neo,e.raiz,e.dominio,e.registro,e.base_pt].map(norm).join(' ');
-    return hay.includes(q);
-  }).sort((a,b) => {
-    const ae=norm(a.pt)===q ? 0 : 1;
-    const be=norm(b.pt)===q ? 0 : 1;
-    return ae-be || String(a.pt).localeCompare(String(b.pt),'pt-BR');
-  });
+  refreshSearchIndexIfNeeded();
+  return searchPage(SEARCH_INDEX, query, options);
 }
+
+function searchLexicon(query, filters={}){
+  return searchLexiconPage(query, {...filters, offset:0, limit:100}).items;
+}
+
 module.exports={
   translatePtToNeo,
   translateNeoToPt,
   searchLexicon,
+  searchLexiconPage,
+  formatAnalysis,
   LEXICON,
   DOMAINS:[...new Set(LEXICON.map(x=>x.dominio))].sort(),
 };

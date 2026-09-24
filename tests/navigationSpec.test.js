@@ -61,3 +61,12 @@ test('android launcher includes an adaptive Neo icon', () => {
   assert.match(fg, /#FFFFFFFF/i);
   assert.match(adaptive, /ic_launcher_foreground/);
 });
+
+test('dictionary uses paged search and incremental rendering instead of eager full search', () => {
+  const dictionary = read('src/screens/DictionaryScreen.js');
+  assert.match(dictionary, /searchLexiconPage/);
+  assert.match(dictionary, /PAGE_SIZE\s*=\s*40/);
+  assert.match(dictionary, /onEndReached/);
+  assert.equal(/searchLexicon\(query/.test(dictionary), false);
+  assert.equal(/slice\(0,\s*140\)/.test(dictionary), false);
+});
